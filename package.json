@@ -1,0 +1,13 @@
+{
+  "name": "location-tracking-backend",
+  "version": "1.0.0",
+  "description": "Backend server to receive location data",
+  "main": "example-backend.js",
+  "scripts": {
+    "start": "node example-backend.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+
