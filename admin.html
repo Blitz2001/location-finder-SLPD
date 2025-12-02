@@ -494,14 +494,7 @@
 
     <script>
         // Backend API URL - Auto-detect or use localhost
-        const API_BASE = (() => {
-            const hostname = window.location.hostname;
-            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
-                return 'http://localhost:3000';
-            }
-            // For production, use the same hostname with port 3000 or your backend URL
-            return `http://${hostname}:3000`;
-        })();
+        const API_BASE = 'https://location-finder-slpd.onrender.com';
         
         console.log('API Base URL:', API_BASE);
         
