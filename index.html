@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Finder</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f0f2f5;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #1a1a1a;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+            background: #0070f3;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        a:hover {
+            background: #0051a2;
+        }
+
+        a.secondary {
+            background: #e5e7eb;
+            color: #1a1a1a;
+        }
+
+        a.secondary:hover {
+            background: #d1d5db;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <h1>Location Finder System</h1>
+        <p>Select a portal to continue:</p>
+        <div class="links">
+            <a href="admin.html">Go to Admin Dashboard</a>
+            <a href="get-location.html" class="secondary">Test Location Page</a>
+        </div>
+    </div>
+</body>
+
+</html>
